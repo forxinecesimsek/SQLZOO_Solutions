@@ -43,7 +43,7 @@ WHERE booking.guest_id IN (1185,1270)
 GROUP BY guest_id
 ```
 
-# Medium Solutions
+# Medium Questions
 
 ### 6. Ruth Cadbury. Show the total amount payable by guest Ruth Cadbury for her room bookings. You should JOIN to the rate table using room_type_requested and occupants.
 
