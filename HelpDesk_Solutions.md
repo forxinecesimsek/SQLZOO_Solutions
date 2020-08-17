@@ -1,4 +1,4 @@
-*Tables:* [link to tables of HelpDesk](https://sqlzoo.net/wiki/Helpdesk_Hard_Questions)
+*Tables:* *[link to tables of HelpDesk](https://sqlzoo.net/wiki/Helpdesk_Hard_Questions)*
 
 # Easy Questions
 
