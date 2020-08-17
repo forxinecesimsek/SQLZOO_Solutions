@@ -198,26 +198,14 @@ LIMIT 1
 
 ```sql
 SELECT
-	DATE_ADD(MAKEDATE(2016, 7), INTERVAL WEEK(DATE_ADD(booking.booking_date, INTERVAL booking.nights - 5 DAY), 0) WEEK) AS i,
-	SUM(booking.nights * rate.amount) + SUM(e.amount)AS Total
-FROM
-	booking
-	JOIN
-		rate
-		ON (booking.occupants = rate.occupancy
-		AND booking.room_type_requested = rate.room_type)
-	LEFT JOIN
-		(
-			SELECT
-				booking_id,
-				SUM(amount) as amount
-			FROM
-				extra
-			group by
-				booking_id
-		)
-		AS e
-		ON (e.booking_id = booking.booking_id)
-GROUP BY
-	i
+    DATE_ADD(MAKEDATE(2016, 7), INTERVAL WEEK(DATE_ADD(booking.booking_date, INTERVAL booking.nights - 5 DAY), 0) WEEK) AS i,
+    SUM(booking.nights * rate.amount) + SUM(e.amount)AS Total
+FROM booking
+   JOIN rate 
+   ON (booking.occupants = rate.occupancy AND booking.room_type_requested = rate.room_type)
+LEFT JOIN
+   (SELECT booking_id, SUM(amount) as amount
+    FROM extra GROUP BY booking_id) AS e
+    ON (e.booking_id = booking.booking_id)
+    GROUP BY i
  ```
