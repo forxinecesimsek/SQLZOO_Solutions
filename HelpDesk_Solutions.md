@@ -113,3 +113,147 @@ INNER JOIN Staff ON Taken_by=Staff_Code
 ORDER BY call_date DESC
 LIMIT 1
 ```
+
+### 11. Show the manager and number of calls received for each hour of the day on 2017-08-12.
+
+```sql
+WITH date_table AS 
+       (SELECT DATE_FORMAT(call_date, '%Y-%m-%d %H') date_hour, 
+        DATE_FORMAT(call_date, '%Y-%m-%d') date, DATE_FORMAT(call_date, '%H') 
+        hour 
+        FROM Issue
+        WHERE DATE_FORMAT(call_date, '%Y-%m-%d')='2017-08-12'
+        )
+
+SELECT Manager, date_hour, COUNT(*) cc 
+FROM date_table
+INNER JOIN Shift 
+       ON date_table.date=Shift.Shift_date
+WHERE Shift.Shift_type = 'early' 
+      AND date_table.hour <= 13 
+      OR Shift.Shift_type = 'late' 
+      AND date_table.hour > 13
+      GROUP BY Manager,date_hour
+
+ORDER BY date_hour
+```
+### 13. Annoying customers. Customers who call in the last five minutes of a shift are annoying. Find the most active customer who has never been annoying.
+
+
+```sql
+WITH not_annoyings AS 
+(SELECT
+	Caller.Company_ref,
+	COUNT(*) count
+FROM Caller
+    JOIN Issue ON (Caller.Caller_id = Issue.Caller_id)
+WHERE Caller.Caller_id NOT IN (
+    SELECT DISTINCT i.caller_id
+	FROM Issue i
+		WHERE HOUR(i.call_date) in (13, 19)
+			AND MINUTE(i.call_date) >= 55)
+GROUP BY Caller.Company_ref)
+
+SELECT
+    Customer.Company_Name, 
+    not_annoyings.count
+FROM not_annoyings
+    JOIN Customer ON Customer.Company_ref = not_annoyings.Company_ref   
+ORDER BY not_annoyings.count DESC LIMIT 1;
+```
+
+### 14. Maximal usage. If every caller registered with a customer makes a call in one day then that customer has "maximal usage" of the service. List the maximal customers for 2017-08-13.
+
+```sql
+SELECT
+	a.Company_name,
+	a.caller_count,
+	b.issue_count
+FROM
+	(
+		SELECT
+			Customer.Company_name,
+			COUNT(Caller.Company_ref) AS caller_count
+		FROM
+			Customer
+			JOIN
+				Caller
+				ON (Customer.Company_ref = Caller.Company_ref)
+		GROUP BY
+			Customer.Company_name
+	)
+	AS a
+	JOIN
+		(
+			SELECT
+				Customer.Company_name,
+				COUNT(DISTINCT Issue.Caller_id) AS issue_count
+			FROM
+				Customer
+				JOIN
+					Caller
+					ON (Customer.Company_ref = Caller.Company_ref)
+				JOIN
+					Issue
+					ON (Caller.Caller_id = Issue.Caller_id)
+			WHERE
+				YEAR(Issue.call_date) = '2017'
+				AND MONTH(Issue.call_date) = '08'
+				AND DAY(Issue.call_date) = '13'
+			GROUP BY
+				Customer.Company_name
+		)
+		AS b
+		ON a.Company_name = b.Company_name
+WHERE
+	a.caller_count = b.issue_count;
+```
+
+### 15. Consecutive calls occur when an operator deals with two callers within 10 minutes. Find the longest sequence of consecutive calls – give the name of the operator and the first and last call date in the sequence.
+
+```sql
+SELECT
+	a.taken_by,
+	a.first_call,
+	a.last_call,
+	a.call_count AS calls
+FROM
+	(
+		SELECT
+			taken_by,
+			call_date AS last_call,
+			@row_number1:= CASE
+				WHEN
+					TIMESTAMPDIFF(MINUTE, @call_date, call_date) <= 10
+				THEN
+					@row_number1 + 1
+				ELSE
+					1
+			END AS call_count,
+			@first_call_date:= CASE
+				WHEN
+					@row_number1 = 1
+				THEN
+					call_date
+				ELSE
+					@first_call_date
+			END AS first_call,
+			@call_date:= Issue.call_date AS call_date
+		FROM
+			Issue,
+			(
+				SELECT
+					@row_number1 := 0,
+					@call_date := 0,
+					@first_call_date := 0
+			)
+			AS row_number_init
+		ORDER BY
+			taken_by,
+			call_date
+	)
+	AS a
+ORDER BY
+	a.call_count DESC LIMIT 1;
+```
+
