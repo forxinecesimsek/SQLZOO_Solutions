@@ -1,4 +1,4 @@
-*Tables:* *[link to tables of Musicians](https://sqlzoo.net/wiki/Musicians_easy_questions)*
+*Tables:* *[link to tables of Musicians](https://db.grussell.org/ermusician.html)*
 
 # Easy Questions
 
@@ -75,7 +75,7 @@ not_null AS (SELECT COUNT(*) can_play FROM musician m
 LEFT JOIN diff_instruments ON m.m_no=diff_instruments.m_no
 WHERE diff_instruments.m_name IS NOT NULL),
 
-av AS (SELECT can_play, cannot_play, cannot_play/can_play AS average FROM _null,not_null)
+av AS (SELECT can_play, cannot_play, can_play/cannot_play+can_play AS average FROM _null,not_null)
 
 SELECT m_no, m_name, different_ins, average FROM diff_instruments, av
 ```
