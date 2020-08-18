@@ -149,4 +149,5 @@ JOIN has_composed hc ON c.c_no=hc.cmpn_no
 JOIN composer cp ON hc.cmpr_no=cp.comp_no
 JOIN musician m ON cp.comp_is=m.m_no
 WHERE m.m_name='Sue Little'
+ORDER BY band_name
 ```
