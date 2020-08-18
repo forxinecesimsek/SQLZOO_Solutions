@@ -6,7 +6,7 @@
 
 ```sql
 
-SELECT m.m_name as organiser
+SELECT m.m_name
 FROM   concert c
 JOIN   musician m ON m.m_no = c.concert_orgniser
 WHERE  concert_venue = 'Assembly Rooms'
@@ -75,7 +75,7 @@ not_null AS (SELECT COUNT(*) can_play FROM musician m
 LEFT JOIN diff_instruments ON m.m_no=diff_instruments.m_no
 WHERE diff_instruments.m_name IS NOT NULL),
 
-av AS (SELECT can_play, cannot_play, can_play/cannot_play+can_play AS average FROM _null,not_null)
+av AS (SELECT can_play, cannot_play, can_play/(cannot_play+can_play) AS average FROM _null,not_null)
 
 SELECT m_no, m_name, different_ins, average FROM diff_instruments, av
 ```
