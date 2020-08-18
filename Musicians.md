@@ -79,3 +79,74 @@ av AS (SELECT can_play, cannot_play, can_play/(cannot_play+can_play) AS average 
 
 SELECT m_no, m_name, different_ins, average FROM diff_instruments, av
 ```
+# Medium Questions
+
+### 6. List the names, dates of birth and the instrument played of living musicians who play a instrument which Theo also plays.
+
+```sql
+WITH living_musicians AS (SELECT * FROM musician
+WHERE died IS NULL),
+
+list_Theo AS (SELECT perf_no, m_name, born, instrument FROM performer p
+JOIN musician m ON p.perf_is=m.m_no
+WHERE m_name LIKE 'Theo%'),
+
+a AS (SELECT * FROM performer p
+WHERE p.instrument IN (SELECT instrument FROM list_Theo) 
+AND p.perf_is IN (SELECT m_no FROM living_musicians))
+
+SELECT m_name, DATE_FORMAT(born, '%Y-%m-%d') born_date, instrument FROM a
+JOIN musician m ON a.perf_is=m.m_no
+WHERE m_name NOT LIKE 'Theo%'
+```
+
+### 7. List the name and the number of players for the band whose number of players is greater than the average number of players in each band.
+
+```sql
+WITH a AS (SELECT band_name, COUNT(*) count FROM band b
+JOIN plays_in p ON b.band_no=p.band_id
+GROUP BY band_name),
+
+av AS (SELECT SUM(count)/COUNT(band_name) AS avg FROM a)
+
+SELECT * FROM a, av
+WHERE count> avg
+```
+
+### 8. List the names of musicians who both conduct and compose and live in Britain.
+
+```sql
+WITH a AS (SELECT * FROM performance p
+JOIN musician m ON p.conducted_by=m.m_no
+JOIN composer c ON m.m_no=c.comp_is
+WHERE comp_is=conducted_by)
+
+SELECT DISTINCT m_name FROM a
+JOIN place pl ON a.living_in=pl.place_no
+WHERE place_country IN ('England', 'Scotland')
+```
+
+### 9. Show the least commonly played instrument and the number of musicians who play it.
+
+```sql
+WITH least_played AS (SELECT instrument, COUNT(*) count FROM performer
+GROUP BY instrument
+HAVING count <= 1)
+
+SELECT m_name, lp.instrument FROM performer p
+JOIN least_played lp ON p.instrument=lp.instrument
+JOIN musician m ON perf_is = m.m_no
+WHERE p.instrument=lp.instrument
+```
+
+### 10. List the bands that have played music composed by Sue Little; Give the titles of the composition in each case.
+
+```sql
+SELECT band_name, c_title FROM band b
+JOIN performance p ON b.band_no=p.gave
+JOIN composition c ON p.performed=c.c_no
+JOIN has_composed hc ON c.c_no=hc.cmpn_no
+JOIN composer cp ON hc.cmpr_no=cp.comp_no
+JOIN musician m ON cp.comp_is=m.m_no
+WHERE m.m_name='Sue Little'
+```
